@@ -1,39 +1,8 @@
-﻿Build started 09/03/2014 3:23:50 PM.
+﻿Build started 09/03/2014 4:29:05 PM.
      1>Project "C:\Users\Mike\Documents\Visual Studio 2012\Projects\Planets\Planets\Planets.vcxproj" on node 2 (Build target(s)).
      1>ClCompile:
          C:\Program Files (x86)\Microsoft Visual Studio 11.0\VC\bin\CL.exe /c /I"C:\Users\Mike\Documents\glew-1.10.0\include" /IC:\Users\Mike\Documents\freeglut\include /IC:\Users\Mike\Documents\freeglut\include /I"C:\Users\Mike\Documents\glew-1.10.0\include" /ZI /nologo /W3 /WX- /sdl /Od /Oy- /D WIN32 /D _DEBUG /D _CONSOLE /D _UNICODE /D UNICODE /Gm /EHsc /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Fo"Debug\\" /Fd"Debug\vc110.pdb" /Gd /TC /analyze- /errorReport:prompt Planets.c
          Planets.c
-     1>c:\users\mike\documents\visual studio 2012\projects\planets\planets\planets.c(250): warning C4305: 'function' : truncation from 'double' to 'GLfloat'
-     1>c:\users\mike\documents\visual studio 2012\projects\planets\planets\planets.c(279): warning C4305: 'function' : truncation from 'double' to 'GLfloat'
-     1>c:\users\mike\documents\visual studio 2012\projects\planets\planets\planets.c(327): warning C4305: '+=' : truncation from 'double' to 'float'
-     1>c:\users\mike\documents\visual studio 2012\projects\planets\planets\planets.c(333): warning C4244: '=' : conversion from 'float' to 'int', possible loss of data
-     1>c:\users\mike\documents\visual studio 2012\projects\planets\planets\planets.c(334): warning C4244: '=' : conversion from 'float' to 'int', possible loss of data
-     1>c:\users\mike\documents\visual studio 2012\projects\planets\planets\planets.c(337): warning C4244: '=' : conversion from 'float' to 'int', possible loss of data
-     1>c:\users\mike\documents\visual studio 2012\projects\planets\planets\planets.c(338): warning C4244: '=' : conversion from 'float' to 'int', possible loss of data
-     1>c:\users\mike\documents\visual studio 2012\projects\planets\planets\planets.c(341): warning C4244: '=' : conversion from 'float' to 'int', possible loss of data
-     1>c:\users\mike\documents\visual studio 2012\projects\planets\planets\planets.c(342): warning C4244: '=' : conversion from 'float' to 'int', possible loss of data
-     1>c:\users\mike\documents\visual studio 2012\projects\planets\planets\planets.c(345): warning C4244: '=' : conversion from 'float' to 'int', possible loss of data
-     1>c:\users\mike\documents\visual studio 2012\projects\planets\planets\planets.c(346): warning C4244: '=' : conversion from 'float' to 'int', possible loss of data
-     1>c:\users\mike\documents\visual studio 2012\projects\planets\planets\planets.c(349): warning C4244: '=' : conversion from 'float' to 'int', possible loss of data
-     1>c:\users\mike\documents\visual studio 2012\projects\planets\planets\planets.c(350): warning C4244: '=' : conversion from 'float' to 'int', possible loss of data
-     1>c:\users\mike\documents\visual studio 2012\projects\planets\planets\planets.c(353): warning C4244: '=' : conversion from 'float' to 'int', possible loss of data
-     1>c:\users\mike\documents\visual studio 2012\projects\planets\planets\planets.c(354): warning C4244: '=' : conversion from 'float' to 'int', possible loss of data
-     1>c:\users\mike\documents\visual studio 2012\projects\planets\planets\planets.c(357): warning C4244: '=' : conversion from 'float' to 'int', possible loss of data
-     1>c:\users\mike\documents\visual studio 2012\projects\planets\planets\planets.c(358): warning C4244: '=' : conversion from 'float' to 'int', possible loss of data
-     1>c:\users\mike\documents\visual studio 2012\projects\planets\planets\planets.c(361): warning C4244: '=' : conversion from 'float' to 'int', possible loss of data
-     1>c:\users\mike\documents\visual studio 2012\projects\planets\planets\planets.c(362): warning C4244: '=' : conversion from 'float' to 'int', possible loss of data
-     1>c:\users\mike\documents\visual studio 2012\projects\planets\planets\planets.c(413): warning C4244: 'function' : conversion from 'double' to 'GLfloat', possible loss of data
-     1>c:\users\mike\documents\visual studio 2012\projects\planets\planets\planets.c(420): warning C4244: 'function' : conversion from 'double' to 'GLfloat', possible loss of data
-     1>c:\users\mike\documents\visual studio 2012\projects\planets\planets\planets.c(427): warning C4244: 'function' : conversion from 'double' to 'GLfloat', possible loss of data
-     1>c:\users\mike\documents\visual studio 2012\projects\planets\planets\planets.c(434): warning C4244: 'function' : conversion from 'double' to 'GLfloat', possible loss of data
-     1>c:\users\mike\documents\visual studio 2012\projects\planets\planets\planets.c(441): warning C4244: 'function' : conversion from 'double' to 'GLfloat', possible loss of data
-     1>c:\users\mike\documents\visual studio 2012\projects\planets\planets\planets.c(448): warning C4244: 'function' : conversion from 'double' to 'GLfloat', possible loss of data
-     1>c:\users\mike\documents\visual studio 2012\projects\planets\planets\planets.c(455): warning C4244: 'function' : conversion from 'double' to 'GLfloat', possible loss of data
-     1>c:\users\mike\documents\visual studio 2012\projects\planets\planets\planets.c(462): warning C4244: 'function' : conversion from 'double' to 'GLfloat', possible loss of data
-     1>c:\users\mike\documents\visual studio 2012\projects\planets\planets\planets.c(489): warning C4244: 'function' : conversion from 'double' to 'GLfloat', possible loss of data
-     1>c:\users\mike\documents\visual studio 2012\projects\planets\planets\planets.c(490): warning C4244: 'function' : conversion from 'double' to 'GLfloat', possible loss of data
-     1>c:\users\mike\documents\visual studio 2012\projects\planets\planets\planets.c(491): warning C4244: 'function' : conversion from 'double' to 'GLfloat', possible loss of data
-     1>c:\users\mike\documents\visual studio 2012\projects\planets\planets\planets.c(864): warning C4244: '=' : conversion from 'float' to 'int', possible loss of data
        Link:
          C:\Program Files (x86)\Microsoft Visual Studio 11.0\VC\bin\link.exe /ERRORREPORT:PROMPT /OUT:"C:\Users\Mike\Documents\Visual Studio 2012\Projects\Planets\Debug\Planets.exe" /INCREMENTAL /NOLOGO /LIBPATH:C:\Users\Mike\Documents\freeglut\lib /LIBPATH:"C:\Users\Mike\Documents\glew-1.10.0\lib\Release\x64" kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /MANIFEST /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /manifest:embed /DEBUG /PDB:"C:\Users\Mike\Documents\Visual Studio 2012\Projects\Planets\Debug\Planets.pdb" /SUBSYSTEM:CONSOLE /TLBID:1 /DYNAMICBASE /NXCOMPAT /IMPLIB:"C:\Users\Mike\Documents\Visual Studio 2012\Projects\Planets\Debug\Planets.lib" /MACHINE:X86 Debug\Planets.obj
          Planets.vcxproj -> C:\Users\Mike\Documents\Visual Studio 2012\Projects\Planets\Debug\Planets.exe
@@ -41,4 +10,4 @@
 
 Build succeeded.
 
-Time Elapsed 00:00:01.66
+Time Elapsed 00:00:01.01
