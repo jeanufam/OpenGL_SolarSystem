@@ -37,7 +37,7 @@ typedef GLfloat point3[3];
 typedef GLfloat color3[3];
 
 // Keep track of current camera position
-GLfloat cameraPosition[] = {0, 0, 500};
+GLfloat cameraPosition[] = {0, 0, 1000, 0, 0, 0};
 
 // This struct defines a planet with a orbit rate, theta value, radius, color, and distance from
 // sun
@@ -76,7 +76,7 @@ void setUpPlanets() {
 	planets[0].distance = 0.0f;
 
 	// Mercury
-	planets[1].rateOrbit = 0.0f;
+	planets[1].rateOrbit = 0.01f;
 	planets[1].theta = 0.0f;
 	planets[1].radius = 75.0f;
 	planets[1].color[0] = 1.0f;
@@ -163,7 +163,7 @@ void drawPlanets() {
 
 	// Go through the 10 planets and draw them all and translate them
 	// Based on their theta value and rate of orbit and distance from the sun
-	for (i=0;i<1;i++) {
+	for (i=0;i<2;i++) {
 		// Do translations and rotations
 
 		// Draw each planet
@@ -192,10 +192,8 @@ void init(void)
 	// Load identity matrix onto projection matrix
     glLoadIdentity();
 
-    // Set the window to 2d orthographic
-	// glOrtho(left, right, bottom, top, near, far);
-
-	glOrtho(-400, 400, -400, 400, 0.1, 1000);
+    // gluPerspective(fovy, aspect, near, far)
+    gluPerspective(90, 1, 0.1, 1000);
 
     // change into model-view mode so that we can change the object positions
 	glMatrixMode(GL_MODELVIEW);
@@ -240,7 +238,7 @@ void display(void)
 	glLoadIdentity();
 
 	// Set up the camera position
-	gluLookAt(cameraPosition[0], cameraPosition[1], cameraPosition[2], 0, 0, 0, 0, 1, 0);
+	gluLookAt(cameraPosition[0], cameraPosition[1], cameraPosition[2], cameraPosition[3], cameraPosition[4], cameraPosition[5], 0, 1, 0);
 
 	// Call draw functions here
 	drawPlanets();
