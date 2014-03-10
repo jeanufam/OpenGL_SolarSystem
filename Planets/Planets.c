@@ -1,77 +1,62 @@
 
 /************************************************************************************
 
-	File: 			screensaver.c
+	File: 			Planets.c
 
-	Description:	An open GL program that displays a screen saver with various functionality, morphing, sparkles,
-					and bonus effects. This is built with opengl and freeglut.
+	Description:	It is a Solar System simulation that shows all of the planets rotating around the sun.
+					As well as stars in the distance and a space ship of the enterprise. The sun has a firery
+					corona and there is also a shield that pops up around the enterprise. A klingon fleet
+					also attacks when you press a certain button.
 
-	Author:			Michael Northorp (heavily modifed the point.c from course website as well as other examples in class)
+	Author:			Michael Northorp
 
 *************************************************************************************/
 
 /* include the library header files */
 // Freeglut header
+// Fixes a compiler warning with fopen
 #define _CRT_SECURE_NO_DEPRECATE
 #include <GL\freeglut.h>
 #include <GL\Gl.h>
 #include <windows.h>
+// Math header
 #include <math.h>
+// File read in
 #include <stdio.h>
+// Time header for random seeds
 #include <time.h>
 
-/* Global variables */
-
-//  Ratio of the circumference to the diameter of a circle
+/* Defines */
+// Ratio of the circumference to the diameter of a circle
 #define PI 3.14159265f
-
 // Conversion multiplier for converting from degrees to Radians for some calculations
 #define DEG_TO_RAD PI/180.0f
-
 // Window size parameters
 #define WIN_HEIGHT 640.0f
 #define WIN_WIDTH 640.0f
-
 // Define the number of stars
 #define NUM_STARS 2500
-
 // Define the number of planets
 #define NUM_PLANETS 11
-
 // Define the number of corona lines
 #define NUM_CORONAS 360
-
 // Define the number of klingon ships to generate
 // Higher than 10 may cause app to lag
 #define NUM_KLINGON 8
 
+/* Global variables */
+
+/* Typedefs and structs */
+
 // Defines an x,y,z point
 typedef GLfloat point3[3];
-
 // Defines a RGB color
 typedef GLfloat color3[3];
-
-// Define starting points for klingon x/y/z
-point3 klingonPoints[NUM_KLINGON];
-
-// Keep track of current camera position and set the default
-GLfloat cameraPosition[] = {0, 500, 2500, 0, 0, 0};
-
-// Keep track of ship position
-GLfloat shipPosition[] = {0, 300, 2200};
-
 // This is a star struct
 typedef struct
 {
 	point3 starPoints;
 } star;
-
-// Create a list of stars
-star stars[NUM_STARS];
-
-// Set up display list for stars
-GLuint starField = 0;
-
 // This struct defines a planet with a orbit rate, theta value, radius, color, and distance from
 // sun
 typedef struct
@@ -88,40 +73,55 @@ typedef struct
     GLfloat distance;
 } planet;
 
+/* Position variables for camera and ship */
+
+// Keep track of current camera position and set the default
+GLfloat cameraPosition[] = {0, 500, 2500, 0, 0, 0};
+// Keep track of ship position
+GLfloat shipPosition[] = {0, 300, 2200};
+
+/* Array sizes for various objects */
+
+// Define starting points for klingon x/y/z
+point3 klingonPoints[NUM_KLINGON];
+// Create a list of stars
+star stars[NUM_STARS];
 // Initialize an array for all the planets of struct planet
 planet planets[NUM_PLANETS];
 
-// This is an array of all the vertices for the enterprise
-point3 shipVertices[1201];
+/* Display Lists */
 
-// This is an array of all the vertices for the klingon ship
-point3 klingonVertices[1610];
-
+// Set up display list for stars
+GLuint starField = 0;
+// Set up display list for the ship
+GLuint theShip = 0;
 // Set up display list for the klingon ship
 GLuint klingonShip = 0;
-
 // Set up display list for the klingon ship fleet
 GLuint klingonShipFleet = 0;
 
-// Set up display list for the ship
-GLuint theShip = 0;
+/* Ship vertices */
+
+// This is an array of all the vertices for the enterprise
+point3 shipVertices[1201];
+// This is an array of all the vertices for the klingon ship
+point3 klingonVertices[1610];
+
+/* Interp values */
 
 // Set an interp variable for the klingon ship to bring it close to user
 GLfloat klingonInterp = 0;
-
 // This controls the color of the shield
 GLfloat shieldInterp = 0.5;
-
 // Keep track of the shield interp if it is increasing or decreasing
 int shieldInterpFlip = 0;
 
-// This toggles all the different keys
+/* Key toggles for features */
 int ringsToggle = 0;
 int starsToggle = 0;
 int coronaToggle = 0;
 int shieldToggle = 0;
 int bonusToggle = 0;
-
 // Toggles for directions key pressed and not pressed
 int upPressed = 0;
 int downPressed = 0;
@@ -130,7 +130,14 @@ int leftPressed = 0;
 int forwardPressed = 0;
 int backwardPressed = 0;
 
-// This controls normal keys for toggling features of the program
+/************************************************************************
+
+	Function:		normalKeys
+
+	Description:	This checks when a key is pressed that controls one of the
+					features in the program.
+
+*************************************************************************/
 void normalKeys(unsigned char key, int x, int y) {
 	switch(key) {
 		// Toggle the rings for orbits
@@ -179,7 +186,14 @@ void normalKeys(unsigned char key, int x, int y) {
 	}
 }
 
-// This reads in special keys for controlling the ship
+/************************************************************************
+
+	Function:		specialKeys
+
+	Description:	This checks when a special key is pressed to move the
+					ship.
+
+*************************************************************************/
 void specialKeys(int key, int x, int y) {
 		// Move up
 		if(key == GLUT_KEY_UP) {
@@ -213,7 +227,13 @@ void specialKeys(int key, int x, int y) {
 		}
 }
 
-// This checks when a special key is released for tilting
+/************************************************************************
+
+	Function:		specialKeysReleased
+
+	Description:	This checks when a special key is released
+
+*************************************************************************/
 void specialKeysReleased(int key, int x, int y) {
 		if(key == GLUT_KEY_UP) {
 			// Set the key to be depressed
@@ -246,13 +266,19 @@ void specialKeysReleased(int key, int x, int y) {
 		}
 }
 
-// This function prints out all the keys used by the program
+/************************************************************************
+
+	Function:		printOutcontrols
+
+	Description:	This prints out all of the controls for the program.
+
+*************************************************************************/
 void printOutControls() {
 	printf("Scene Controls\n--------------\n");
 	printf("r: toggle orbit rings\n");
 	printf("s: toggle stars\n");
 	printf("c: toggle the sun's corona\n");
-	printf("k: toggle shields\n\n");
+	printf("k: toggle shields\n");
 	printf("b: toggle bonus klingon attack\n\n");
 	printf("Camera Controls\n---------------\n");
 	printf("Up    Arrow: move up\n");
@@ -263,7 +289,15 @@ void printOutControls() {
 	printf("PAGE  DOWN : backward\n");
 }
 
-// This sets up the enemey klingon ship
+/************************************************************************
+
+	Function:		setUpKlingonShip
+
+	Description:	This reads in the klingonShip, similar to the setup
+					ship function. And caches a fleet of ships into a display
+					list.
+
+*************************************************************************/
 void setUpKlingonShip() {
 	int i = 0;
 	int j = 1;
@@ -279,6 +313,7 @@ void setUpKlingonShip() {
 	FILE * fileStream;
 	// Char array to store
 	char string[100];
+	// Read in the klingon ship
 	fileStream = fopen("enemyship.txt", "rt");
 
 	// Make sure the file stream is not null
@@ -296,6 +331,7 @@ void setUpKlingonShip() {
 
 			// Check if it read in a face and draw it and store in a display list
 			if(sscanf(string, "f %d %d %d ", &face1, &face2, &face3) == 3) {
+				// Random colors based on the number of faces
 				glColor3f(j/(float)3191, j/(float)3191, j/(float)3191);
 				glBegin(GL_TRIANGLES);
 					glVertex3f(klingonVertices[face1-1][0], klingonVertices[face1-1][1], klingonVertices[face1-1][2]);
@@ -358,7 +394,15 @@ void setUpKlingonShip() {
 	glEndList();
 }
 
-// This sets up the main ship by reading it in from a text file
+/************************************************************************
+
+	Function:		setUpShip
+
+	Description:	This reads in the ship from a text file that includes
+					a list of the vertices and a list of the faces. The
+					entire ship is drawn using a bunch of triangles.
+
+*************************************************************************/
 void setUpShip() {
 	int i = 0;
 	int j = 1;
@@ -389,8 +433,10 @@ void setUpShip() {
 
 			// Check if it read in a face and draw it and store in a display list
 			if(sscanf(string, "f %d %d %d ", &face1, &face2, &face3) == 3) {
+				// Get a random color based on the value of j over the total number of faces
 				glColor3f(j/(float)1988, j/(float)1988, j/(float)1988);
 				glBegin(GL_TRIANGLES);
+					// Read in all of the vertices
 					glVertex3f(shipVertices[face1-1][0], shipVertices[face1-1][1], shipVertices[face1-1][2]);
 					glVertex3f(shipVertices[face2-1][0], shipVertices[face2-1][1], shipVertices[face2-1][2]);
 					glVertex3f(shipVertices[face3-1][0], shipVertices[face3-1][1], shipVertices[face3-1][2]);
@@ -409,7 +455,16 @@ void setUpShip() {
 	fclose (fileStream);
 }
 
-// This draws the main ship
+/************************************************************************
+
+	Function:		drawShip
+
+	Description:	This draws the main ship based on the camera location and
+					if keys were pressed to move the ship. Whenever a key is pressed
+					the position is updated to go in that direction. The ship is
+					stored in a display list.
+
+*************************************************************************/
 void drawShip() {
 	glPushMatrix();
 
@@ -480,7 +535,15 @@ void drawShip() {
 	glPopMatrix();
 }
 
-// Draw the enemy klingon ship
+/************************************************************************
+
+	Function:		drawKlingonShip
+
+	Description:	This draws the klingon fleet of ships that are cached in
+					a display list. It also decides where to draw them based
+					on an interp value.
+
+*************************************************************************/
 void drawKlingonShip() {
 	// Push the matrix
 	glPushMatrix();
@@ -505,13 +568,27 @@ void drawKlingonShip() {
 }
 
 
-// Draw a planet with a radius and color
+/************************************************************************
+
+	Function:		drawPlanet
+
+	Description:	This draws a planet when passed in a radius and a color
+					as a solidsphere.
+
+*************************************************************************/
 void drawPlanet(GLfloat radius, color3 color) {
 	glColor3fv(color);
 	glutSolidSphere(radius, 50, 50);
 }
 
-// This function sets up 9 planets including the sun
+/************************************************************************
+
+	Function:		setUpPlanets
+
+	Description:	This sets up all of the planets including pluto and the moon.
+					It sets their various attributes based on the planets struct.
+
+*************************************************************************/
 void setUpPlanets() {
 	// The sun
 	planets[0].rateOrbit = 0.0f;
@@ -613,7 +690,14 @@ void setUpPlanets() {
 	planets[10].distance = 70.0f;
 }
 
-// Draw planets
+/************************************************************************
+
+	Function:		drawPlanets
+
+	Description:	This draws all of the planets as solid spheres, and figures
+					out where to rotate them too and translate each frame.
+
+*************************************************************************/
 void drawPlanets() {
 	int i;
 
@@ -659,7 +743,16 @@ void rotatePlanets() {
 	}
 }
 
-// This draws the orbits of the planets
+/************************************************************************
+
+	Function:		drawOrbits
+
+	Description:	This draws the orbits of each planet and the orbit of the
+					moon around the earth. It uses a line loop to accomplish
+					this as well as some cos and sin math. And the distance the
+					planets are from the sun.
+
+*************************************************************************/
 void drawOrbits() {
 	int i;
 	int j;
@@ -699,7 +792,16 @@ void drawOrbits() {
 	}
 }
 
-// This sets up the stars with random points
+/************************************************************************
+
+	Function:		setUpStars
+
+	Description:	This sets up the stars based on a global value amount,
+					and scatters them along a far away z axis, on the x y at
+					random points. It stores all of these in a display list
+					to be able to draw them quicker. They are all single points.
+
+*************************************************************************/
 void setUpStars() {
 	int i;
 	for(i=0;i<NUM_STARS;i++) {
@@ -726,14 +828,32 @@ void setUpStars() {
    	glEndList();
 }
 
-// This draws stars in the background
+/************************************************************************
+
+	Function:		drawStars
+
+	Description:	Draws the stars in the background which are called from
+					a display list and changes the color randomly to add
+					a twinkle to them.
+
+*************************************************************************/
 void drawStars() {
 	// Call the list previously stored with a random color
 	glColor3f((float)(rand()/(float)RAND_MAX), (float)(rand()/(float)RAND_MAX), (float)(rand()/(float)RAND_MAX));
 	glCallList(starField);
 }
 
-// Draw the shield using a wireframe
+/************************************************************************
+
+	Function:		drawShield
+
+	Description:	This draws a shield around the enterpise that follows it
+					as it tilts. The shiled pulses between two colors based on
+					an interp value and also changes in transparency. This is
+					made using a wireframe sphere and acts as a cool looking
+					shield.
+
+*************************************************************************/
 void drawShield() {
 	// Push the matrix
 	glPushMatrix();
@@ -816,11 +936,21 @@ void calculateKlingonInterp() {
 	}
 }
 
-// Draw the suns corona
+/************************************************************************
+
+	Function:		drawCorona
+
+	Description:	This draws the suns corona in 3d using multiple lines coming
+					from around the sun. These are random and will grow to different
+					lengths and appear / dissapear when toggled.
+
+*************************************************************************/
 void drawCorona() {
 	float j;
 	float i;
+	// Stars at the edge of the sun radius
 	int startNum = 200;
+	// Random number to grow the line too
 	int randNum;
 
 	// Push the matrix
@@ -832,6 +962,8 @@ void drawCorona() {
 	glEnable(GL_BLEND);
 	// Set blending mode for transparency
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+	// Go through all of the degrees rotating along the x axis to make it 3d
 	for(i=0;i<360;i++) {
 		// Generate a random num to decide if the corona should be drawn on a z axis
 		randNum = (rand() % (300-200)) + 200;
@@ -873,8 +1005,9 @@ void drawCorona() {
 	Function:		init
 
 	Description:	This performs the main setup for openGl, it sets the
-	projection mod to gl_projection, and the coordinate system.
-
+					projection mod to gl_projection and modelview. It also sets
+					the perspective and performs a number of setup functions.
+					These display the controls, set up the planets, stars and ships.
 *************************************************************************/
 void init(void)
 {
@@ -917,8 +1050,9 @@ void init(void)
 	Function:		myIdle
 
 	Description:	This runs whenever the program is idle. It handles most
-	of the dynamic functionality of the program. This includes scales, angles
-	changing, and vertexs to interpolate between for the sparkle.
+					of the dynamic functionality of the program.
+					This includes rotating planets, changing interp values for
+					shield and klingons moving.
 
 *************************************************************************/
 void myIdle(void)
@@ -940,8 +1074,9 @@ void myIdle(void)
 
 	Function:		display
 
-	Description:	Draws initial static openGL. Sets up buttons, menu,
-	drawing of letters, calls mouse functionality, runs all animations.
+	Description:	Clears color and depth buffer. Sets up the camera position
+					and look at position. Draws planets and other objects based
+					on button toggles. Always draws planets and ship.
 
 *************************************************************************/
 void display(void)
@@ -1000,8 +1135,8 @@ void display(void)
 
 	Description:	Sets up the openGL rendering context and the windowing
 					system, then begins the display loop. Display mode is
-					set to double buffering, and idle function and mouse
-					event listener are set up.
+					set to double buffering, and idle function and keyboard
+					event listeners are set up. glut depth display mode is set.
 
 *************************************************************************/
 void main(int argc, char** argv)
