@@ -35,7 +35,7 @@
 #define NUM_STARS 2500
 
 // Define the number of planets
-#define NUM_PLANETS 10
+#define NUM_PLANETS 11
 
 // Defines an x,y,z point
 //
@@ -76,7 +76,7 @@ typedef struct
 } planet;
 
 // Initialize an array for all the planets of struct planet
-planet planets[10];
+planet planets[NUM_PLANETS];
 
 // This is an array of all the vertices for the enterprise
 point3 shipVertices[1201];
@@ -86,6 +86,7 @@ GLuint theShip = 0;
 
 void setUpShip() {
 	int i = 0;
+	int j = 1;
 
 	// Ship faces to draw as a triangle
 	int face1;
@@ -113,12 +114,13 @@ void setUpShip() {
 
 			// Check if it read in a face and draw it and store in a display list
 			if(sscanf(string, "f %d %d %d ", &face1, &face2, &face3) == 3) {
-				glColor3f(rand(), rand(), rand());
+				glColor3f(j/(float)1988, j/(float)1988, j/(float)1988);
 				glBegin(GL_TRIANGLES);
 					glVertex3f(shipVertices[face1-1][0], shipVertices[face1-1][1], shipVertices[face1-1][2]);
 					glVertex3f(shipVertices[face2-1][0], shipVertices[face2-1][1], shipVertices[face2-1][2]);
 					glVertex3f(shipVertices[face3-1][0], shipVertices[face3-1][1], shipVertices[face3-1][2]);
 				glEnd();
+				j++;
 			}
 
 			// Increase i for reading in vertices
@@ -135,8 +137,8 @@ void setUpShip() {
 // This draws the ship
 void drawShip() {
 	glPushMatrix();
-	glTranslatef(0.0f, 0.0f, 0.0f);
-	glScalef(10.0f, 10.0f, 10.0f);
+	glTranslatef(0.0f, 0.0f, 1500.0f);
+	glScalef(250.0f, 250.0f, 250.0f);
 	glCallList(theShip);
 	glPopMatrix();
 }
@@ -238,6 +240,15 @@ void setUpPlanets() {
 	planets[9].color[1] = 0.0f;
 	planets[9].color[2] = 0.3f;
 	planets[9].distance = planets[8].distance + planets[8].radius + planets[9].radius + 20.0f;
+
+	// Earth moon
+	planets[10].rateOrbit = 0.0001f;
+	planets[10].theta = 0.0f;
+	planets[10].radius = 5.0f;
+	planets[10].color[0] = 1.0f;
+	planets[10].color[1] = 1.0f;
+	planets[10].color[2] = 1.0f;
+	planets[10].distance = planets[3].distance;
 }
 
 // Draw planets
@@ -273,15 +284,21 @@ void rotatePlanets() {
 	}
 }
 
+// This draws the orbits of the planets
 void drawOrbits() {
 	int i;
 	int j;
 
+	// Go through each planets
 	for(i=1;i<NUM_PLANETS;i++) {
-		glBegin(GL_LINES);
+		// Begin a line loop for orbit lines
+		glBegin(GL_LINE_LOOP);
+		// Go from 1 to 360 degrees and draw the orbit lines, which then connect
 		for(j=0;j<360;j++) {
-
-			glVertex3f(planets[i].rateOrbit * cos(j * DEG_TO_RAD), 0, planets[i].rateOrbit * sin(j * DEG_TO_RAD));
+			// Set color to white
+			glColor3f(1.0f, 1.0f, 1.0f);
+			// Get x and z values, y is at 0
+			glVertex3f(planets[i].distance * cos(j * DEG_TO_RAD), 0, planets[i].distance * sin(j * DEG_TO_RAD));
 		}
 		glEnd();
 	}
@@ -397,17 +414,10 @@ void display(void)
 	gluLookAt(cameraPosition[0], cameraPosition[1], cameraPosition[2], cameraPosition[3], cameraPosition[4], cameraPosition[5], 0, 1, 0);
 
 	// Call draw functions here
-	// drawPlanets();
+	drawPlanets();
 	drawOrbits();
 	drawStars();
 	drawShip();
-
-	glBegin(GL_TRIANGLES);
-		glColor3f(1.0f, 1.0f, 0.0f);
-		glVertex3f(0, 0, -1000);
-		glVertex3f(0, 1, -1000);
-		glVertex3f(1, 0, -1000);
-	glEnd();
 
 	// Swap the drawing buffers here
 	glutSwapBuffers();
