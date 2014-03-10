@@ -18,6 +18,7 @@
 #include <windows.h>
 #include <math.h>
 #include <stdio.h>
+#include <time.h>
 
 /* Global variables */
 
@@ -40,17 +41,24 @@
 // Define the number of corona lines
 #define NUM_CORONAS 360
 
+// Define the number of klingon ships to generate
+// Higher than 10 may cause app to lag
+#define NUM_KLINGON 8
+
 // Defines an x,y,z point
 typedef GLfloat point3[3];
 
 // Defines a RGB color
 typedef GLfloat color3[3];
 
+// Define starting points for klingon x/y/z
+point3 klingonPoints[NUM_KLINGON];
+
 // Keep track of current camera position and set the default
-GLfloat cameraPosition[] = {0, 500, 2000, 0, 0, 0};
+GLfloat cameraPosition[] = {0, 500, 2500, 0, 0, 0};
 
 // Keep track of ship position
-GLfloat shipPosition[] = {0, 0, 1400};
+GLfloat shipPosition[] = {0, 300, 2200};
 
 // This is a star struct
 typedef struct
@@ -86,8 +94,20 @@ planet planets[NUM_PLANETS];
 // This is an array of all the vertices for the enterprise
 point3 shipVertices[1201];
 
+// This is an array of all the vertices for the klingon ship
+point3 klingonVertices[1610];
+
+// Set up display list for the klingon ship
+GLuint klingonShip = 0;
+
+// Set up display list for the klingon ship fleet
+GLuint klingonShipFleet = 0;
+
 // Set up display list for the ship
 GLuint theShip = 0;
+
+// Set an interp variable for the klingon ship to bring it close to user
+GLfloat klingonInterp = 0;
 
 // This controls the color of the shield
 GLfloat shieldInterp = 0.5;
@@ -100,6 +120,14 @@ int ringsToggle = 0;
 int starsToggle = 0;
 int coronaToggle = 0;
 int shieldToggle = 0;
+
+// Toggles for directions key pressed and not pressed
+int upPressed = 0;
+int downPressed = 0;
+int rightPressed = 0;
+int leftPressed = 0;
+int forwardPressed = 0;
+int backwardPressed = 0;
 
 // This controls normal keys for toggling features of the program
 void normalKeys(unsigned char key, int x, int y) {
@@ -143,43 +171,69 @@ void normalKeys(unsigned char key, int x, int y) {
 
 // This reads in special keys for controlling the ship
 void specialKeys(int key, int x, int y) {
-	switch(key) {
-		case GLUT_KEY_UP:
-			cameraPosition[1] += 20;
-			cameraPosition[4] += 20;
-			shipPosition[1] += 20;
-			break;
-		case GLUT_KEY_DOWN:
-			cameraPosition[1] -= 20;
-			cameraPosition[4] -= 20;
-			shipPosition[1] -= 20;
-			break;
-		case GLUT_KEY_RIGHT:
-			cameraPosition[0] += 20;
-			cameraPosition[3] += 20;
-			shipPosition[0] += 20;
-			break;
-		case GLUT_KEY_LEFT:
-			cameraPosition[0] -= 20;
-			cameraPosition[3] -= 20;
-			shipPosition[0] -= 20;
-			break;
-		default:
-			break;
-	}
+		// Move up
+		if(key == GLUT_KEY_UP) {
+			// Set the key to be pressed
+			upPressed = 1;
+		}
+		// Move down
+		if(key == GLUT_KEY_DOWN) {
+			// Set the key to be pressed
+			downPressed = 1;
+		}
+		// Move right
+		if(key == GLUT_KEY_RIGHT) {
+			// Set the key to be pressed
+			rightPressed = 1;
+		}
+		// Move left
+		if(key == GLUT_KEY_LEFT) {
+			// Set the key to be pressed
+			leftPressed = 1;
+		}
+		// Move forward
+		if(key == GLUT_KEY_PAGE_UP) {
+			// Set the key to be pressed
+			forwardPressed = 1;
+		}
+		// Move down
+		if(key == GLUT_KEY_PAGE_DOWN) {
+			// Set the key to be pressed
+			backwardPressed = 1;
+		}
 }
 
-// This checks when a special key is released
+// This checks when a special key is released for tilting
 void specialKeysReleased(int key, int x, int y) {
-	switch(key) {
-		case GLUT_KEY_UP:
-			printf("Up released");
-			break;
-		case GLUT_KEY_DOWN:
-			break;
-		default:
-			break;
-	}
+		if(key == GLUT_KEY_UP) {
+			// Set the key to be depressed
+			upPressed = 0;
+		}
+		// Move down
+		if(key == GLUT_KEY_DOWN) {
+			// Set the key to be depressed
+			downPressed = 0;
+		}
+		// Move right
+		if(key == GLUT_KEY_RIGHT) {
+			// Set the key to be depressed
+			rightPressed = 0;
+		}
+		// Move left
+		if(key == GLUT_KEY_LEFT) {
+			// Set the key to be depressed
+			leftPressed = 0;
+		}
+		// Move forward
+		if(key == GLUT_KEY_PAGE_UP) {
+			// Set the key to be depressed
+			forwardPressed = 0;
+		}
+		// Move down
+		if(key == GLUT_KEY_PAGE_DOWN) {
+			// Set the key to be depressed
+			backwardPressed = 0;
+		}
 }
 
 // This function prints out all the keys used by the program
@@ -198,7 +252,103 @@ void printOutControls() {
 	printf("PAGE  DOWN : backward\n");
 }
 
-// This sets up the ship by reading it in from a text file
+// This sets up the enemey klingon ship
+void setUpKlingonShip() {
+	int i = 0;
+	int j = 1;
+	int randx = 0;
+	int randy = 0;
+
+	// Ship faces to draw as a triangle
+	int face1;
+	int face2;
+	int face3;
+
+	// Set up a file
+	FILE * fileStream;
+	// Char array to store
+	char string[100];
+	fileStream = fopen("enemyship.txt", "rt");
+
+	// Make sure the file stream is not null
+	if (fileStream != NULL)
+	{
+		// Puts the ship in a display list
+		klingonShip = glGenLists(1);
+	  	glNewList(klingonShip, GL_COMPILE);
+
+		// Read each file line while it is not null, store in char array
+		while(fgets(string, 100, fileStream) != NULL)
+		{
+			// Store the ship vertices as it reads the file
+			sscanf(string, "v %f %f %f ", &klingonVertices[i][0], &klingonVertices[i][1], &klingonVertices[i][2]);
+
+			// Check if it read in a face and draw it and store in a display list
+			if(sscanf(string, "f %d %d %d ", &face1, &face2, &face3) == 3) {
+				glColor3f(j/(float)3191, j/(float)3191, j/(float)3191);
+				glBegin(GL_TRIANGLES);
+					glVertex3f(klingonVertices[face1-1][0], klingonVertices[face1-1][1], klingonVertices[face1-1][2]);
+					glVertex3f(klingonVertices[face2-1][0], klingonVertices[face2-1][1], klingonVertices[face2-1][2]);
+					glVertex3f(klingonVertices[face3-1][0], klingonVertices[face3-1][1], klingonVertices[face3-1][2]);
+				glEnd();
+				j++;
+			}
+
+			// Increase i for reading in vertices
+			i++;
+		}
+
+		// End the display list
+		glEndList();
+
+	}
+	fclose (fileStream);
+
+	// Set a new random seed value
+	srand (time(0));
+	// Generate random starting points for klingon ships
+	for(i=0;i<NUM_KLINGON;i++) {
+		// Random starting x and y value with time as seed
+		randx = rand() % (600 + 600) - 600;
+		randy = rand() % (1000 - 100) + 100;
+		printf("%d %d ", randx, randy);
+
+		// Assign values to the klingon ships
+		klingonPoints[i][0] = randx;
+		klingonPoints[i][1] = randy;
+		klingonPoints[i][2] = -3000;
+	}
+
+	// Puts the ship fleet  in a display list
+	klingonShipFleet = glGenLists(1);
+  	glNewList(klingonShipFleet, GL_COMPILE);
+
+	// Set up another display list to store a fleet of klingon ships
+	for(i=0;i<NUM_KLINGON;i++) {
+		// Push the matrix
+		glPushMatrix();
+
+		// Translate to a random point in the back and interp
+		glTranslatef(klingonPoints[i][0], klingonPoints[i][1], klingonPoints[i][2]);
+
+		// Rotate the ship so it is facing the user
+		glRotatef(-90, 1.0f, 0.0f, 0.0f);
+
+		// Scale the ships to same size as enterprise
+		glScalef(100.0f, 100.0f, 100.0f);
+
+		// Draw the klingonShip
+		glCallList(klingonShip);
+
+		// Pop the matrix
+		glPopMatrix();
+	}
+
+	// End the fleet list
+	glEndList();
+}
+
+// This sets up the main ship by reading it in from a text file
 void setUpShip() {
 	int i = 0;
 	int j = 1;
@@ -249,14 +399,101 @@ void setUpShip() {
 	fclose (fileStream);
 }
 
-// This draws the ship
+// This draws the main ship
 void drawShip() {
 	glPushMatrix();
+
+	// Translate it to the ships global position
 	glTranslatef(shipPosition[0], shipPosition[1], shipPosition[2]);
-	glScalef(250.0f, 250.0f, 250.0f);
+	// Check if we should rotate a certain way depending on where the ship is moving
+	if(upPressed) {
+		// Update camera position and ship position
+		cameraPosition[1] += 20;
+		cameraPosition[4] += 20;
+		shipPosition[1] += 20;
+
+		// Add tilt to ship
+		glRotatef(20, 1.0f, 0.0f, 0.0f);
+	}
+
+	if(downPressed) {
+		// Update camera position and ship position
+		cameraPosition[1] -= 20;
+		cameraPosition[4] -= 20;
+		shipPosition[1] -= 20;
+
+		// Add tilt to ship
+		glRotatef(-20, 1.0f, 0.0f, 0.0f);
+	}
+
+	if(rightPressed) {
+		// Update camera position and ship position
+		cameraPosition[0] += 20;
+		cameraPosition[3] += 20;
+		shipPosition[0] += 20;
+
+		// Add tilt to ship
+		glRotatef(-20, 0.0f, 0.0f, 1.0f);
+	}
+
+	if(leftPressed) {
+		// Update camera position and ship position
+		cameraPosition[0] -= 20;
+		cameraPosition[3] -= 20;
+		shipPosition[0] -= 20;
+
+		// Add tilt to ship
+		glRotatef(20, 0.0f, 0.0f, 1.0f);
+	}
+
+	if(forwardPressed) {
+		// Update camera position and ship position
+		cameraPosition[2] -= 20;
+		cameraPosition[5] -= 20;
+		shipPosition[2] -= 20;
+
+		// Add tilt to ship
+		glRotatef(-10, 1.0f, 0.0f, 0.0f);
+	}
+
+	if(backwardPressed) {
+		// Update camera position and ship position
+		cameraPosition[2] += 20;
+		cameraPosition[5] += 20;
+		shipPosition[2] += 20;
+
+		// Add tilt to ship
+		glRotatef(10, 1.0f, 0.0f, 0.0f);
+	}
+	glScalef(100.0f, 100.0f, 100.0f);
 	glCallList(theShip);
 	glPopMatrix();
 }
+
+// Draw the enemy klingon ship
+void drawKlingonShip() {
+	// Push the matrix
+	glPushMatrix();
+
+	// Dont translate anything if the interp is greater than 1.0, so they pause, then have them vanish
+	if(klingonInterp >= 1.0 && klingonInterp < 2.0) {
+		// Translate the fleet based on the interp on the Z axis
+		glTranslatef(0.0f, 0.0f, 4000.0);
+		// Draw the fleet of ships
+		glCallList(klingonShipFleet);
+	} else if(klingonInterp >= 2.0) {
+		// Don't draw anything because they vanished
+	} else {
+		// Translate the fleet based on the interp on the Z axis
+		glTranslatef(0.0f, 0.0f, (1-klingonInterp) * klingonPoints[0][2] + klingonInterp * 4000.0);
+		// Draw the fleet of ships
+		glCallList(klingonShipFleet);
+	}
+
+	// Pop the matrix
+	glPopMatrix();
+}
+
 
 // Draw a planet with a radius and color
 void drawPlanet(GLfloat radius, color3 color) {
@@ -457,9 +694,9 @@ void setUpStars() {
 	int i;
 	for(i=0;i<NUM_STARS;i++) {
 		// Set up stars with random points on the 1000.0 Z axis
-		stars[i].starPoints[0] = rand() % 10000 - 5000;
-		stars[i].starPoints[1] = rand() % 10000 - 5000;
-		stars[i].starPoints[2] = -1000.0f;
+		stars[i].starPoints[0] = (rand() % (25000+25000)) - 15000;
+		stars[i].starPoints[1] = (rand() % (25000+25000)) - 15000;
+		stars[i].starPoints[2] = -5000.0f;
 	}
 
 	// Puts the stars in a display list
@@ -469,6 +706,7 @@ void setUpStars() {
   	// Draw the star field once
    	glPointSize(1.0f);
 	glBegin(GL_POINTS);
+		// For each star draw the star point generated and put into display list
 		for(i=0;i<NUM_STARS;i++) {
 				glVertex3fv(stars[i].starPoints);
 		}
@@ -492,9 +730,45 @@ void drawShield() {
 
 	// Translate the shield to the ship position
 	glTranslatef(shipPosition[0], shipPosition[1], shipPosition[2]);
+
+	// Check if we should rotate a certain way depending on where the ship is moving
+	if(upPressed) {
+		// Add tilt to the shield
+		glRotatef(20, 1.0f, 0.0f, 0.0f);
+	}
+
+	if(downPressed) {
+		// Add tilt to the shield
+		glRotatef(-20, 1.0f, 0.0f, 0.0f);
+	}
+
+	if(rightPressed) {
+		// Add tilt to the shield
+		glRotatef(-20, 0.0f, 0.0f, 1.0f);
+	}
+
+	if(leftPressed) {
+		// Add tilt to the shield
+		glRotatef(20, 0.0f, 0.0f, 1.0f);
+	}
+
+	if(forwardPressed) {
+		// Add tilt to the shield
+		glRotatef(-10, 1.0f, 0.0f, 0.0f);
+	}
+
+	if(backwardPressed) {
+		// Add tilt to the shield
+		glRotatef(10, 1.0f, 0.0f, 0.0f);
+	}
+
+	// Scale the z axis to stretch the shield a bit
+	glScalef(1.0f, 1.0f, 1.5f);
+
+	// Pulse the color based on interp value
 	glColor3f(0.0f, shieldInterp, 1-shieldInterp);
 	// Draw the shield using a wireframe
-	glutWireSphere(250, 60, 60);
+	glutWireSphere(70, 40, 40);
 
 	// Pop the matrix
 	glPopMatrix();
@@ -517,9 +791,20 @@ void calculateShieldColor() {
 	}
 }
 
+// This changes the interp value of the klingon ships
+void calculateKlingonInterp() {
+	// Increase the klingon interp and reset if it hits three
+	if(klingonInterp >= 3.0) {
+		klingonInterp = 0.0;
+	} else {
+		klingonInterp += 0.005;
+	}
+}
+
 // Draw the suns corona
 void drawCorona() {
 	float j;
+	float i;
 	int startNum = 200;
 	int randNum;
 
@@ -532,22 +817,37 @@ void drawCorona() {
 	glEnable(GL_BLEND);
 	// Set blending mode for transparency
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	for(j=0;j<360;j+=0.5) {
-		// Generate a random line length
+	for(i=0;i<360;i++) {
+		// Generate a random num to decide if the corona should be drawn on a z axis
 		randNum = (rand() % (300-200)) + 200;
 
-		// Rotate along Z using theta for degrees as a global variable
-		glRotatef(j, 0.0, 0.0, 1.0);
-		glBegin(GL_LINES);
-			// Set the color to yellow with no transparency
-			glColor4f(1.0f, 1.0f, 0.0f, 1.0f);
-			// Start value of the line is on the radius of the sun
-			glVertex3f((float)startNum, 0.0f, 0.0f);
-			// Set the color to orange with some transparency
-			glColor4f(1.0f, 0.6f, 0.0f, 0.7f);
-			// End value of the line is a random number so the lines flicker
-			glVertex3f((float)randNum, 0.0f, 0.0f);
-		glEnd();
+		// Choose to draw random coronas on certain degrees of the sun
+		if(randNum > 290) {
+			// Rotate in 3d for the lines
+			glRotatef(i, 1.0f, 0.0f, 0.0f);
+
+			// Draw all of the lines at random positions on that axis
+			for(j=0;j<360;j+=0.5) {
+				// Generate a random line length
+				randNum = (rand() % (300-200)) + 200;
+
+				// Randomly draw lines on the corona for that z axis
+				if(randNum > 296) {
+					// Rotate along Z using theta for degrees as a global variable
+					glRotatef(j, 0.0, 0.0, 1.0);
+					glBegin(GL_LINES);
+						// Set the color to yellow with no transparency
+						glColor4f(1.0f, 1.0f, 0.0f, 1.0f);
+						// Start value of the line is on the radius of the sun
+						glVertex3f((float)startNum, 0.0f, 0.0f);
+						// Set the color to orange with some transparency
+						glColor4f(1.0f, 0.6f, 0.0f, 0.7f);
+						// End value of the line is a random number so the lines flicker
+						glVertex3f((float)randNum, 0.0f, 0.0f);
+					glEnd();
+				}
+			}
+		}
 	}
 	// Pop the matrix
 	glPopMatrix();
@@ -576,7 +876,7 @@ void init(void)
     glLoadIdentity();
 
     // gluPerspective(fovy, aspect, near, far)
-    gluPerspective(90, 1, 0.1, 10000);
+    gluPerspective(90, 1, 0.1, 40000);
 
     // change into model-view mode so that we can change the object positions
 	glMatrixMode(GL_MODELVIEW);
@@ -592,6 +892,9 @@ void init(void)
 
 	// Set up the ship to be drawn
 	setUpShip();
+
+	// Set up the klingon ship to be drawn
+	setUpKlingonShip();
 }
 
 /************************************************************************
@@ -610,6 +913,9 @@ void myIdle(void)
 
 	// Change the color of the shield so it pulses
 	calculateShieldColor();
+
+	// Increase the interp value of the klingon
+	calculateKlingonInterp();
 
 	// Force a redraw in OpenGL
 	glutPostRedisplay();
@@ -660,6 +966,9 @@ void display(void)
 		drawShield();
 	}
 
+	// Draw klingon ships for bonus
+	drawKlingonShip();
+
 	// Draw the ship
 	drawShip();
 
@@ -697,7 +1006,7 @@ void main(int argc, char** argv)
 	// This handles keyboard input for special keys
 	glutSpecialFunc(specialKeys);
 	// This checks when a special key is released
-	glutKeyboardUpFunc(specialKeysReleased);
+	glutSpecialUpFunc(specialKeysReleased);
 	// register redraw function
 	glutDisplayFunc(display);
 	// go into a perpetual loop
