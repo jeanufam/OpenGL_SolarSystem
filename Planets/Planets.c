@@ -41,7 +41,6 @@
 #define NUM_CORONAS 360
 
 // Defines an x,y,z point
-//
 typedef GLfloat point3[3];
 
 // Defines a RGB color
@@ -49,6 +48,9 @@ typedef GLfloat color3[3];
 
 // Keep track of current camera position and set the default
 GLfloat cameraPosition[] = {0, 500, 2000, 0, 0, 0};
+
+// Keep track of ship position
+GLfloat shipPosition[] = {0, 0, 1400};
 
 // This is a star struct
 typedef struct
@@ -87,6 +89,116 @@ point3 shipVertices[1201];
 // Set up display list for the ship
 GLuint theShip = 0;
 
+// This controls the color of the shield
+GLfloat shieldInterp = 0.5;
+
+// Keep track of the shield interp if it is increasing or decreasing
+int shieldInterpFlip = 0;
+
+// This toggles all the different keys
+int ringsToggle = 0;
+int starsToggle = 0;
+int coronaToggle = 0;
+int shieldToggle = 0;
+
+// This controls normal keys for toggling features of the program
+void normalKeys(unsigned char key, int x, int y) {
+	switch(key) {
+		// Toggle the rings for orbits
+		case 'r':
+			if(ringsToggle == 1) {
+				ringsToggle = 0;
+			} else {
+				ringsToggle = 1;
+			}
+			break;
+		// Toggle the stars
+		case 's':
+			if(starsToggle == 1) {
+				starsToggle = 0;
+			} else {
+				starsToggle = 1;
+			}
+			break;
+		// Toggle the corona
+		case 'c':
+			if(coronaToggle == 1) {
+				coronaToggle = 0;
+			} else {
+				coronaToggle = 1;
+			}
+			break;
+		// Toggle the shields
+		case 'k':
+			if(shieldToggle == 1) {
+				shieldToggle = 0;
+			} else {
+				shieldToggle = 1;
+			}
+			break;
+		default:
+			break;
+	}
+}
+
+// This reads in special keys for controlling the ship
+void specialKeys(int key, int x, int y) {
+	switch(key) {
+		case GLUT_KEY_UP:
+			cameraPosition[1] += 20;
+			cameraPosition[4] += 20;
+			shipPosition[1] += 20;
+			break;
+		case GLUT_KEY_DOWN:
+			cameraPosition[1] -= 20;
+			cameraPosition[4] -= 20;
+			shipPosition[1] -= 20;
+			break;
+		case GLUT_KEY_RIGHT:
+			cameraPosition[0] += 20;
+			cameraPosition[3] += 20;
+			shipPosition[0] += 20;
+			break;
+		case GLUT_KEY_LEFT:
+			cameraPosition[0] -= 20;
+			cameraPosition[3] -= 20;
+			shipPosition[0] -= 20;
+			break;
+		default:
+			break;
+	}
+}
+
+// This checks when a special key is released
+void specialKeysReleased(int key, int x, int y) {
+	switch(key) {
+		case GLUT_KEY_UP:
+			printf("Up released");
+			break;
+		case GLUT_KEY_DOWN:
+			break;
+		default:
+			break;
+	}
+}
+
+// This function prints out all the keys used by the program
+void printOutControls() {
+	printf("Scene Controls\n--------------\n");
+	printf("r: toggle orbit rings\n");
+	printf("s: toggle stars\n");
+	printf("c: toggle the sun's corona\n");
+	printf("k: toggle shields\n\n");
+	printf("Camera Controls\n---------------\n");
+	printf("Up    Arrow: move up\n");
+	printf("Down  Arrow: move down\n");
+	printf("Right Arrow: move right\n");
+	printf("Left  Arrow: move left\n");
+	printf("PAGE  UP   : forward\n");
+	printf("PAGE  DOWN : backward\n");
+}
+
+// This sets up the ship by reading it in from a text file
 void setUpShip() {
 	int i = 0;
 	int j = 1;
@@ -140,7 +252,7 @@ void setUpShip() {
 // This draws the ship
 void drawShip() {
 	glPushMatrix();
-	glTranslatef(0.0f, 0.0f, 1500.0f);
+	glTranslatef(shipPosition[0], shipPosition[1], shipPosition[2]);
 	glScalef(250.0f, 250.0f, 250.0f);
 	glCallList(theShip);
 	glPopMatrix();
@@ -375,7 +487,34 @@ void drawStars() {
 
 // Draw the shield using a wireframe
 void drawShield() {
+	// Push the matrix
+	glPushMatrix();
 
+	// Translate the shield to the ship position
+	glTranslatef(shipPosition[0], shipPosition[1], shipPosition[2]);
+	glColor3f(0.0f, shieldInterp, 1-shieldInterp);
+	// Draw the shield using a wireframe
+	glutWireSphere(250, 60, 60);
+
+	// Pop the matrix
+	glPopMatrix();
+}
+
+// This changes the color of the shield so it pulses
+void calculateShieldColor() {
+	// Increase or decrease the color value of the shield
+	if(shieldInterpFlip == 1) {
+		shieldInterp -= 0.02;
+	} else {
+		shieldInterp += 0.02;
+	}
+
+	// Control if the shield interp is increasing or decreasing
+	if(shieldInterp >= 1.0) {
+		shieldInterpFlip = 1;
+	} else if(shieldInterp <= 0.5) {
+		shieldInterpFlip = 0;
+	}
 }
 
 // Draw the suns corona
@@ -442,6 +581,9 @@ void init(void)
     // change into model-view mode so that we can change the object positions
 	glMatrixMode(GL_MODELVIEW);
 
+	// Print out the controls
+	printOutControls();
+
 	// Set up the planet values
 	setUpPlanets();
 
@@ -463,9 +605,12 @@ void init(void)
 *************************************************************************/
 void myIdle(void)
 {
-
-	// Idle stuff like increasing thetas or scales
+	// Rotate all of the planets
 	rotatePlanets();
+
+	// Change the color of the shield so it pulses
+	calculateShieldColor();
+
 	// Force a redraw in OpenGL
 	glutPostRedisplay();
 }
@@ -491,10 +636,31 @@ void display(void)
 	gluLookAt(cameraPosition[0], cameraPosition[1], cameraPosition[2], cameraPosition[3], cameraPosition[4], cameraPosition[5], 0, 1, 0);
 
 	// Call draw functions here
+
+	// Draw the planets
 	drawPlanets();
-	drawCorona();
-	drawOrbits();
-	drawStars();
+
+	// Draw the corona
+	if(coronaToggle == 1) {
+		drawCorona();
+	}
+
+	// Draw the orbits
+	if(ringsToggle == 1) {
+		drawOrbits();
+	}
+
+	// Draw the stars
+	if(starsToggle == 1) {
+		drawStars();
+	}
+
+	// Draw the shield
+	if(shieldToggle == 1) {
+		drawShield();
+	}
+
+	// Draw the ship
 	drawShip();
 
 	// Swap the drawing buffers here
@@ -526,6 +692,12 @@ void main(int argc, char** argv)
 	init();
 	// register the idle function
 	glutIdleFunc(myIdle);
+	// This handles keyboard input for normal keys
+	glutKeyboardFunc(normalKeys);
+	// This handles keyboard input for special keys
+	glutSpecialFunc(specialKeys);
+	// This checks when a special key is released
+	glutKeyboardUpFunc(specialKeysReleased);
 	// register redraw function
 	glutDisplayFunc(display);
 	// go into a perpetual loop
