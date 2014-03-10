@@ -12,10 +12,12 @@
 
 /* include the library header files */
 // Freeglut header
+#define _CRT_SECURE_NO_DEPRECATE
 #include <GL\freeglut.h>
 #include <GL\Gl.h>
 #include <windows.h>
 #include <math.h>
+#include <stdio.h>
 
 /* Global variables */
 
@@ -31,6 +33,9 @@
 
 // Define the number of stars
 #define NUM_STARS 2500
+
+// Define the number of planets
+#define NUM_PLANETS 10
 
 // Defines an x,y,z point
 //
@@ -72,6 +77,69 @@ typedef struct
 
 // Initialize an array for all the planets of struct planet
 planet planets[10];
+
+// This is an array of all the vertices for the enterprise
+point3 shipVertices[1201];
+
+// Set up display list for the ship
+GLuint theShip = 0;
+
+void setUpShip() {
+	int i = 0;
+
+	// Ship faces to draw as a triangle
+	int face1;
+	int face2;
+	int face3;
+
+	// Set up a file
+	FILE * fileStream;
+	// Char array to store
+	char string[100];
+	fileStream = fopen("ship.txt", "rt");
+
+	// Make sure the file stream is not null
+	if (fileStream != NULL)
+	{
+		// Puts the ship in a display list
+		theShip = glGenLists(1);
+	  	glNewList(theShip, GL_COMPILE);
+
+		// Read each file line while it is not null, store in char array
+		while(fgets(string, 100, fileStream) != NULL)
+		{
+			// Store the ship vertices as it reads the file
+			sscanf(string, "v %f %f %f ", &shipVertices[i][0], &shipVertices[i][1], &shipVertices[i][2]);
+
+			// Check if it read in a face and draw it and store in a display list
+			if(sscanf(string, "f %d %d %d ", &face1, &face2, &face3) == 3) {
+				glColor3f(rand(), rand(), rand());
+				glBegin(GL_TRIANGLES);
+					glVertex3f(shipVertices[face1-1][0], shipVertices[face1-1][1], shipVertices[face1-1][2]);
+					glVertex3f(shipVertices[face2-1][0], shipVertices[face2-1][1], shipVertices[face2-1][2]);
+					glVertex3f(shipVertices[face3-1][0], shipVertices[face3-1][1], shipVertices[face3-1][2]);
+				glEnd();
+			}
+
+			// Increase i for reading in vertices
+			i++;
+		}
+
+		// End the display list
+		glEndList();
+
+	}
+	fclose (fileStream);
+}
+
+// This draws the ship
+void drawShip() {
+	glPushMatrix();
+	glTranslatef(0.0f, 0.0f, 0.0f);
+	glScalef(10.0f, 10.0f, 10.0f);
+	glCallList(theShip);
+	glPopMatrix();
+}
 
 // Draw a planet with a radius and color
 void drawPlanet(GLfloat radius, color3 color) {
@@ -178,7 +246,7 @@ void drawPlanets() {
 
 	// Go through the 10 planets and draw them all and translate them
 	// Based on their theta value and rate of orbit and distance from the sun
-	for (i=0;i<10;i++) {
+	for (i=0;i<NUM_PLANETS;i++) {
 		// Do translations and rotations
 		glPushMatrix();
 		// Get the degree of the rotation
@@ -195,13 +263,27 @@ void drawPlanets() {
 void rotatePlanets() {
 	int i;
 	// Increase each planets theta value or roll it over
-	for(i=0;i<10;i++) {
+	for(i=0;i<NUM_PLANETS;i++) {
 		// Check if the theta should roll over
 		if(planets[i].theta >= 1.0f) {
 			planets[i].theta = 0.0f;
 		}
 		// Increase the theta value of the planet
 		planets[i].theta += planets[i].rateOrbit;
+	}
+}
+
+void drawOrbits() {
+	int i;
+	int j;
+
+	for(i=1;i<NUM_PLANETS;i++) {
+		glBegin(GL_LINES);
+		for(j=0;j<360;j++) {
+
+			glVertex3f(planets[i].rateOrbit * cos(j * DEG_TO_RAD), 0, planets[i].rateOrbit * sin(j * DEG_TO_RAD));
+		}
+		glEnd();
 	}
 }
 
@@ -271,6 +353,9 @@ void init(void)
 
 	// Set up the star values
 	setUpStars();
+
+	// Set up the ship to be drawn
+	setUpShip();
 }
 
 /************************************************************************
@@ -312,8 +397,17 @@ void display(void)
 	gluLookAt(cameraPosition[0], cameraPosition[1], cameraPosition[2], cameraPosition[3], cameraPosition[4], cameraPosition[5], 0, 1, 0);
 
 	// Call draw functions here
-	drawPlanets();
+	// drawPlanets();
+	drawOrbits();
 	drawStars();
+	drawShip();
+
+	glBegin(GL_TRIANGLES);
+		glColor3f(1.0f, 1.0f, 0.0f);
+		glVertex3f(0, 0, -1000);
+		glVertex3f(0, 1, -1000);
+		glVertex3f(1, 0, -1000);
+	glEnd();
 
 	// Swap the drawing buffers here
 	glutSwapBuffers();
