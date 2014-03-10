@@ -775,8 +775,13 @@ void drawShield() {
 	// Scale the z axis to stretch the shield a bit
 	glScalef(1.0f, 1.0f, 1.5f);
 
-	// Pulse the color based on interp value
-	glColor3f(0.0f, shieldInterp, 1-shieldInterp);
+	// Enable blending
+	glEnable(GL_BLEND);
+	// Set blending mode for transparency
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+	// Color the sphere to be semi transparent
+	glColor4f(0.0f, shieldInterp, 1-shieldInterp, shieldInterp);
 	// Draw the shield using a wireframe
 	glutWireSphere(70, 40, 40);
 
