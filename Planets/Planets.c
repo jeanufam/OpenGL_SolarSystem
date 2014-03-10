@@ -120,6 +120,7 @@ int ringsToggle = 0;
 int starsToggle = 0;
 int coronaToggle = 0;
 int shieldToggle = 0;
+int bonusToggle = 0;
 
 // Toggles for directions key pressed and not pressed
 int upPressed = 0;
@@ -162,6 +163,15 @@ void normalKeys(unsigned char key, int x, int y) {
 				shieldToggle = 0;
 			} else {
 				shieldToggle = 1;
+			}
+			break;
+		// Toggle the bonus of the klingons attacking
+		case 'b':
+			if(bonusToggle == 1) {
+				bonusToggle = 0;
+			} else {
+				klingonInterp = 0.0f;
+				bonusToggle = 1;
 			}
 			break;
 		default:
@@ -243,6 +253,7 @@ void printOutControls() {
 	printf("s: toggle stars\n");
 	printf("c: toggle the sun's corona\n");
 	printf("k: toggle shields\n\n");
+	printf("b: toggle bonus klingon attack\n\n");
 	printf("Camera Controls\n---------------\n");
 	printf("Up    Arrow: move up\n");
 	printf("Down  Arrow: move down\n");
@@ -311,7 +322,6 @@ void setUpKlingonShip() {
 		// Random starting x and y value with time as seed
 		randx = rand() % (600 + 600) - 600;
 		randy = rand() % (1000 - 100) + 100;
-		printf("%d %d ", randx, randy);
 
 		// Assign values to the klingon ships
 		klingonPoints[i][0] = randx;
@@ -967,7 +977,9 @@ void display(void)
 	}
 
 	// Draw klingon ships for bonus
-	drawKlingonShip();
+	if(bonusToggle == 1) {
+		drawKlingonShip();
+	}
 
 	// Draw the ship
 	drawShip();
