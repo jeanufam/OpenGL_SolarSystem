@@ -37,6 +37,9 @@
 // Define the number of planets
 #define NUM_PLANETS 11
 
+// Define the number of corona lines
+#define NUM_CORONAS 360
+
 // Defines an x,y,z point
 //
 typedef GLfloat point3[3];
@@ -312,6 +315,7 @@ void drawOrbits() {
 			// Translate to a distance from the sun
 			glTranslatef(planets[3].distance, 0.0f, 0.0f);
 		}
+		glLineWidth(1.0f);
 		// Begin a line loop for orbit lines
 		glBegin(GL_LINE_LOOP);
 		// Go from 1 to 360 degrees and draw the orbit lines, which then connect
@@ -367,6 +371,47 @@ void drawStars() {
 	// Call the list previously stored with a random color
 	glColor3f((float)(rand()/(float)RAND_MAX), (float)(rand()/(float)RAND_MAX), (float)(rand()/(float)RAND_MAX));
 	glCallList(starField);
+}
+
+// Draw the shield using a wireframe
+void drawShield() {
+
+}
+
+// Draw the suns corona
+void drawCorona() {
+	float j;
+	int startNum = 200;
+	int randNum;
+
+	// Push the matrix
+	glPushMatrix();
+
+	// Increase the line width
+	glLineWidth(1.5f);
+	// Enable blending
+	glEnable(GL_BLEND);
+	// Set blending mode for transparency
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	for(j=0;j<360;j+=0.5) {
+		// Generate a random line length
+		randNum = (rand() % (300-200)) + 200;
+
+		// Rotate along Z using theta for degrees as a global variable
+		glRotatef(j, 0.0, 0.0, 1.0);
+		glBegin(GL_LINES);
+			// Set the color to yellow with no transparency
+			glColor4f(1.0f, 1.0f, 0.0f, 1.0f);
+			// Start value of the line is on the radius of the sun
+			glVertex3f((float)startNum, 0.0f, 0.0f);
+			// Set the color to orange with some transparency
+			glColor4f(1.0f, 0.6f, 0.0f, 0.7f);
+			// End value of the line is a random number so the lines flicker
+			glVertex3f((float)randNum, 0.0f, 0.0f);
+		glEnd();
+	}
+	// Pop the matrix
+	glPopMatrix();
 }
 
 /************************************************************************
@@ -447,6 +492,7 @@ void display(void)
 
 	// Call draw functions here
 	drawPlanets();
+	drawCorona();
 	drawOrbits();
 	drawStars();
 	drawShip();
