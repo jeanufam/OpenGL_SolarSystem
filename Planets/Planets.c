@@ -242,13 +242,13 @@ void setUpPlanets() {
 	planets[9].distance = planets[8].distance + planets[8].radius + planets[9].radius + 20.0f;
 
 	// Earth moon
-	planets[10].rateOrbit = 0.0001f;
+	planets[10].rateOrbit = 0.01f;
 	planets[10].theta = 0.0f;
-	planets[10].radius = 5.0f;
+	planets[10].radius = 20.0f;
 	planets[10].color[0] = 1.0f;
 	planets[10].color[1] = 1.0f;
 	planets[10].color[2] = 1.0f;
-	planets[10].distance = planets[3].distance;
+	planets[10].distance = 70.0f;
 }
 
 // Draw planets
@@ -260,10 +260,23 @@ void drawPlanets() {
 	for (i=0;i<NUM_PLANETS;i++) {
 		// Do translations and rotations
 		glPushMatrix();
-		// Get the degree of the rotation
-		glRotatef(planets[i].theta * 360.0f, 0.0f, 1.0f, 0.0f);
-		// Translate to a distance from the sun
-		glTranslatef(planets[i].distance, 0.0f, 0.0f);
+		// If it is the moon for the earth, translate it out from the earth
+		if(i==10) {
+			// Rotate to where the earth is
+			glRotatef(planets[3].theta * 360.0f, 0.0f, 1.0f, 0.0f);
+			// Translate to the earth
+			glTranslatef(planets[3].distance, 0.0f, 0.0f);
+			// Rotate around the earth now
+			glRotatef(planets[i].theta * 360.0f, 0.0f, 1.0f, 0.0f);
+			// Move away from earth
+			glTranslatef(planets[i].distance, 0.0f, 0.0f);
+		} else { // If it is a normal planet
+			// Get the degree of the rotation
+			glRotatef(planets[i].theta * 360.0f, 0.0f, 1.0f, 0.0f);
+			// Translate to a distance from the sun
+			glTranslatef(planets[i].distance, 0.0f, 0.0f);
+		}
+
 		// Draw each planet
 		drawPlanet(planets[i].radius, planets[i].color);
 		glPopMatrix();
@@ -291,16 +304,35 @@ void drawOrbits() {
 
 	// Go through each planets
 	for(i=1;i<NUM_PLANETS;i++) {
+		// If moon translate to position of earth before drawing orbit line
+		if(i==10) {
+			glPushMatrix();
+			// Get the degree of the rotation
+			glRotatef(planets[3].theta * 360.0f, 0.0f, 1.0f, 0.0f);
+			// Translate to a distance from the sun
+			glTranslatef(planets[3].distance, 0.0f, 0.0f);
+		}
 		// Begin a line loop for orbit lines
 		glBegin(GL_LINE_LOOP);
 		// Go from 1 to 360 degrees and draw the orbit lines, which then connect
 		for(j=0;j<360;j++) {
 			// Set color to white
 			glColor3f(1.0f, 1.0f, 1.0f);
-			// Get x and z values, y is at 0
-			glVertex3f(planets[i].distance * cos(j * DEG_TO_RAD), 0, planets[i].distance * sin(j * DEG_TO_RAD));
+			// If drawing orbit for moon
+			if(i==10) {
+				// Get x and z values, y is at 0
+				glVertex3f(planets[i].distance * cos(j * DEG_TO_RAD), 0, planets[i].distance * sin(j * DEG_TO_RAD));
+			} else {
+				// Get x and z values, y is at 0
+				glVertex3f(planets[i].distance * cos(j * DEG_TO_RAD), 0, planets[i].distance * sin(j * DEG_TO_RAD));
+			}
 		}
 		glEnd();
+
+		// Pop matrix if drawing the moon
+		if(i==10) {
+			glPopMatrix();
+		}
 	}
 }
 
