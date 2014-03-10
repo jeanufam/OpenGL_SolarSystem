@@ -26,8 +26,11 @@
 #define DEG_TO_RAD PI/180.0f
 
 // Window size parameters
-#define WIN_HEIGHT 640.0f;
-#define WIN_WIDTH 640.0f;
+#define WIN_HEIGHT 640.0f
+#define WIN_WIDTH 640.0f
+
+// Define the number of stars
+#define NUM_STARS 2500
 
 // Defines an x,y,z point
 //
@@ -37,7 +40,19 @@ typedef GLfloat point3[3];
 typedef GLfloat color3[3];
 
 // Keep track of current camera position and set the default
-GLfloat cameraPosition[] = {0, 700, 1750, 0, 0, 0};
+GLfloat cameraPosition[] = {0, 500, 2000, 0, 0, 0};
+
+// This is a star struct
+typedef struct
+{
+	point3 starPoints;
+} star;
+
+// Create a list of stars
+star stars[NUM_STARS];
+
+// Set up display list for stars
+GLuint starField = 0;
 
 // This struct defines a planet with a orbit rate, theta value, radius, color, and distance from
 // sun
@@ -189,6 +204,40 @@ void rotatePlanets() {
 		planets[i].theta += planets[i].rateOrbit;
 	}
 }
+
+// This sets up the stars with random points
+void setUpStars() {
+	int i;
+	for(i=0;i<NUM_STARS;i++) {
+		// Set up stars with random points on the 1000.0 Z axis
+		stars[i].starPoints[0] = rand() % 10000 - 5000;
+		stars[i].starPoints[1] = rand() % 10000 - 5000;
+		stars[i].starPoints[2] = -1000.0f;
+	}
+
+	// Puts the stars in a display list
+	starField = glGenLists(1);
+  	glNewList(starField, GL_COMPILE);
+
+  	// Draw the star field once
+   	glPointSize(1.0f);
+	glBegin(GL_POINTS);
+		for(i=0;i<NUM_STARS;i++) {
+				glVertex3fv(stars[i].starPoints);
+		}
+	glEnd();
+
+	// End the list
+   	glEndList();
+}
+
+// This draws stars in the background
+void drawStars() {
+	// Call the list previously stored with a random color
+	glColor3f((float)(rand()/(float)RAND_MAX), (float)(rand()/(float)RAND_MAX), (float)(rand()/(float)RAND_MAX));
+	glCallList(starField);
+}
+
 /************************************************************************
 
 	Function:		init
@@ -212,13 +261,16 @@ void init(void)
     glLoadIdentity();
 
     // gluPerspective(fovy, aspect, near, far)
-    gluPerspective(90, 1, 0.1, 5000);
+    gluPerspective(90, 1, 0.1, 10000);
 
     // change into model-view mode so that we can change the object positions
 	glMatrixMode(GL_MODELVIEW);
 
 	// Set up the planet values
 	setUpPlanets();
+
+	// Set up the star values
+	setUpStars();
 }
 
 /************************************************************************
@@ -261,6 +313,7 @@ void display(void)
 
 	// Call draw functions here
 	drawPlanets();
+	drawStars();
 
 	// Swap the drawing buffers here
 	glutSwapBuffers();
@@ -284,7 +337,7 @@ void main(int argc, char** argv)
 	// set display mode
 	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH);
 	// set window size
-	glutInitWindowSize(640,640);
+	glutInitWindowSize(WIN_HEIGHT, WIN_WIDTH);
 	// open the screen window
 	glutCreateWindow("Solar System");
 	//initialize the rendering context
